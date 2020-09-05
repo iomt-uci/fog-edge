@@ -1,1 +1,0 @@
-#Fog-edge middleware documentation
