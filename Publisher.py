@@ -45,16 +45,17 @@ patient_record_temp = defaultdict(list)
 
 start_time = time.time()
 
-{
-    "Patient_id":"01", 
-    "Device_id":"ESP32-USR03",
-    "Patient_first_name":"Lu",
-    "Patient_last_name":"Lu",
-    "BPM":"0",
-    "SPO2":"-999","TEMP":"0.00",
-    "AP":{"AP1":-90,"AP2":-90,"AP3":-90,"AP4":-90,"AP5":-90,"AP6":-90,"AP7":-90,"AP8":-90,"AP9":-90,"AP10":-90},
-    "USR":{"USR0":-90,"USR1":-90,"USR2":-90,"USR3":-90}
-}
+# sample retrieved data
+# {
+#     "Patient_id":"01", 
+#     "Device_id":"ESP32-USR03",
+#     "Patient_first_name":"Lu",
+#     "Patient_last_name":"Lu",
+#     "BPM":"0",
+#     "SPO2":"-999","TEMP":"0.00",
+#     "AP":{"AP1":-90,"AP2":-90,"AP3":-90,"AP4":-90,"AP5":-90,"AP6":-90,"AP7":-90,"AP8":-90,"AP9":-90,"AP10":-90},
+#     "USR":{"USR0":-90,"USR1":-90,"USR2":-90,"USR3":-90}
+# }
 while True:
     try:
         for device_URL in URL_host_list:

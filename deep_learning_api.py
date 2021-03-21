@@ -123,7 +123,7 @@ def data_preprocessing(data_list):#data_file):
     signal_parts = []
     try:
         length = int(median*1.2)
-    except:
+    except Exception as e:
         print("index is", R_peak_candidates_index)
         print("median is Nan: ",intervals)
         print("interval is",intervals)
