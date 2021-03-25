@@ -56,6 +56,22 @@ start_time = time.time()
 #     "AP":{"AP1":-90,"AP2":-90,"AP3":-90,"AP4":-90,"AP5":-90,"AP6":-90,"AP7":-90,"AP8":-90,"AP9":-90,"AP10":-90},
 #     "USR":{"USR0":-90,"USR1":-90,"USR2":-90,"USR3":-90}
 # }
+
+# send data Fog_edge -> fog_fog
+# {
+#   Patient_id: "1234",
+#   Device_id: "0",
+#   Patient_first_name: "Taiting",
+#   Patient_last_name: "Lu",
+#   BPM: "90",
+#   BPM_Pred: “A”, 
+#   SPO2: "95",
+#   Room_num: "0", ##(0-> CT room, 1-> hall way)
+#   Contact: 
+#   [
+#       {Device_id:”1”,value:"0-3"} ## (range: 0-3 feet, 3-6 feet, 6-9 feet)
+#   ]
+# }
 while True:
     try:
         for device_URL in URL_host_list:
@@ -63,18 +79,27 @@ while True:
             data = eval(r.text)
             Patient_id = data['Patient_id']
             Device_id = data['Device_id']
-            patient_name = data['Patient_first_name']+" "+data['Patient_last_name']
-            bpm = data['BPM']
+            Patient_first_name = data['Patient_first_name']
+            Patient_last_name = data['Patient_last_name']
+            BPM = data['BPM']
+            SPO2 = data['SPO2']
 
-            xPosition, yPosition = get_current_position(AP)
-            sdAlarm0,sdAlarm1,sdAlarm2 = get_SD_Alarms(USR)
-            infos = [Patient_id, Device_id, patient_name,xPosition,yPosition,sdAlarm0,sdAlarm1,sdAlarm2]
-            publisher.publish(channel, "|".join(infos))
-
-            location = (xPosition,yPosition)
-            location_data = Device_id+"|"+str(location) #+"|"+str(time.time())
-            publisher.publish(channel, location_data)
-            print(location_data)
+            Room_num = get_current_position(AP)
+            Contact = get_SD_Alarms(USR)
+  
+            message_to_server = {
+                "Patient_id": Patient_id,
+                "Device_id": Device_id,
+                "Patient_first_name": Patient_first_name,
+                "Patient_last_name": Patient_last_name,
+                "BPM": BPM,
+                "BPM_Pred": "None"
+                "SPO2": SPO2,
+                "Room_num": Room_num,
+                "Contact": Contact
+            }
+            
+            
 
             if Patient_id not in patient_files:
                 file = open(date+"_record_"+ Patient_id +".txt", "w")
@@ -82,22 +107,28 @@ while True:
 
             if Patient_id in db and len(patient_record_temp[Patient_id])>30:
                 # start recording after receiving 30 data; 
-                line = '|'.join([Patient_id, Device_id, patient_name, bpm])
+                line = '|'.join([Patient_id, Device_id, patient_name, BPM])
                 db[Patient_id].append(line)
             else:
                 db[Patient_id] = [line]
                 patient_record_temp[Patient_id].append(line)
-                
+            
             if Patient_id in db and len(db[Patient_id])!=0 and len(db[Patient_id]) % 30==0:
                 ml_result = deep_learning_api.ml_prediction( db[Patient_id] )#patient_file[Patient_id])
                 print("ml result is:      ",ml_result)
                 if ml_result is -1:
                     pass
                 else:
-                    publisher.publish(channel, Device_id+"|"+ deep_learning_api.convert(ml_result) +"|"+"00")
+                    # publisher.publish(channel, Device_id+"|"+ deep_learning_api.convert(ml_result) +"|"+"00")
+                    message_to_server["BPM_Pred"] = deep_learning_api.convert(ml_result)
                     patient_files[Patient_id].write("\n".join(db[Patient_id]))
                     db[Patient_id] = list()
                     print("Result;  ", deep_learning_api.convert(ml_result))
+                    
+            print(message_to_server)
+            publisher.publish(channel, json.dumps(message_to_server))
+
+
             
         time.sleep(5)
                         
